@@ -49,10 +49,10 @@ class OneWire
     }
     open( @logFile, 'r' ) do | f |
       f.each_line do | line |
-	data.push line.strip.split( "\t" )
+	      data.push line.strip.split( "\t" )
       end
     end
-    data = data[ @maxLogEntries * -1, @maxLogEntries ]
+    data = data[ @maxLogEntries * -1, @maxLogEntries ] || [ ]
     data.unshift header
     data
   end
