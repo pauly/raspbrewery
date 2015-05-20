@@ -36,8 +36,10 @@ class OneWire
     self.read.each do | reading |
       logEntry.push reading.last # the temperature
     end
-    open( @logFile, 'a' ) do | f |
-      f.puts logEntry.join( "\t" )
+    if logEntry.length > 1
+      open( @logFile, 'a' ) do | f |
+        f.puts logEntry.join( "\t" )
+      end
     end
   end
 
@@ -49,10 +51,12 @@ class OneWire
     }
     open( @logFile, 'r' ) do | f |
       f.each_line do | line |
-	      data.push line.strip.split( "\t" )
+        data.push line.strip.split( "\t" )
       end
     end
-    data = data[ @maxLogEntries * -1, @maxLogEntries ] || [ ]
+    if data.length > @maxLogEntries
+      data = data[ @maxLogEntries * -1, @maxLogEntries ]
+    end
     data.unshift header
     data
   end
@@ -66,20 +70,20 @@ class OneWire
       #{intro}
       <script type="text/javascript" src="https://www.google.com/jsapi?autoload={ 'modules':[{ 'name':'visualization', 'version':'1', 'packages':['corechart'] }] }"></script>
       <script type="text/javascript">
-	var drawChart = function ( ) {
-	  var d = function ( t ) {
-	    return new Date( t * 1000 );
-	  };
-	  var data = google.visualization.arrayToDataTable( #{data} );
-	  var options = {
-	    title: 'Beer temperatures',
-	    curveType: 'function',
-	    legend: { position: 'bottom' }
-	  };
-	  var chart = new google.visualization.LineChart( document.getElementById( 'curveChart' ));
-	  chart.draw( data, options );
-	};
-	google.setOnLoadCallback( drawChart );
+        var drawChart = function ( ) {
+          var d = function ( t ) {
+            return new Date( t * 1000 );
+          };
+          var data = google.visualization.arrayToDataTable( #{data} );
+          var options = {
+            title: 'Beer temperatures',
+            curveType: 'function',
+            legend: { position: 'bottom' }
+          };
+          var chart = new google.visualization.LineChart( document.getElementById( 'curveChart' ));
+          chart.draw( data, options );
+        };
+        google.setOnLoadCallback( drawChart );
       </script>
     eos
     html.strip.gsub /[\n\r\s]+/, ' '
