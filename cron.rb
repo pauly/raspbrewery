@@ -7,7 +7,7 @@ crontab = crontab.reject do | line |
   line =~ /#{dir}/
 end
 crontab << '# new crontab added for ' + dir
-puts 'Where to write graph? Default /var/www/index.html'
+puts 'Where to write graph? Default /var/www/index.html (ok to just hit enter)'
 outFile = STDIN.gets.chomp.to_s
 outFile = '/var/www/index.html' if outFile.empty?
 crontab << "*/5 * * * * #{executable} > #{outFile} 2> /tmp/temperature.err"
