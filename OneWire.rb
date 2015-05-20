@@ -76,7 +76,7 @@ class OneWire
           };
           var data = google.visualization.arrayToDataTable( #{data} );
           var options = {
-            title: 'Beer temperatures',
+            title: 'Temperatures',
             curveType: 'function',
             legend: { position: 'bottom' }
           };
