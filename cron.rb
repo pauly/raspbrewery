@@ -7,10 +7,18 @@ crontab = crontab.reject do | line |
   line =~ /#{dir}/
 end
 crontab << '# new crontab added for ' + dir
-puts 'Where to write graph? Default /var/www/index.html (ok to just hit enter)'
+default = '/var/www/index.html'
+puts "Where to write graph? Default #{default} (ok to just hit enter)"
 outFile = STDIN.gets.chomp.to_s
-outFile = '/var/www/index.html' if outFile.empty?
-crontab << "*/5 * * * * #{executable} > #{outFile} 2> /tmp/temperature.err"
+outFile = default if outFile.empty?
+default = outFile.gsub 'html', 'json'
+if default === outFile
+  default = '/tmp/temperature.err'
+end
+puts "here to simple data output? Default #{default} (ok to just hit enter)"
+errFile = STDIN.gets.chomp.to_s
+errFile = default if errFile.empty?
+crontab << "*/5 * * * * #{executable} > #{outFile} 2> #{errFile}"
 File.open( '/tmp/cron.tab', 'w' ) do | handle |
   handle.write crontab.join( "\n" ) + "\n"
 end
