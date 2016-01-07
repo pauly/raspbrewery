@@ -70,6 +70,14 @@ class OneWire
     if data.length > @maxLogEntries
       data = data[ @maxLogEntries * -1, @maxLogEntries ]
     end
+    firstTime = nil
+    data.each_with_index do |row, i|
+      if firstTime == nil
+        firstTime = row.first.to_i
+      else
+        data[i][0] = row.first.to_i - firstTime
+      end
+    end
     data.unshift header
     data
   end
@@ -79,24 +87,27 @@ class OneWire
     data = data.inspect.to_s.gsub /"([\d.]+)"/, '\1'
     data = data.gsub /\[([\d]+)/, '[d(\1)'
     html = <<-eos
-      <div id="curveChart" style="width: 800px; height: 600px"></div>
+      <div id="curveChart" style="width: 1024px; height: 640px"></div>
       #{intro}
       <script type="text/javascript" src="https://www.google.com/jsapi?autoload={ 'modules':[{ 'name':'visualization', 'version':'1', 'packages':['corechart'] }] }"></script>
       <script type="text/javascript">
-        var drawChart = function ( ) {
-          var d = function ( t ) {
-            return new Date( t * 1000 );
+        var drawChart = function() {
+          var first = null;
+          var d = function(t) {
+            if (first === null) first = t;
+            if (t < first) t += first;
+            return new Date(t * 1000);
           };
-          var data = google.visualization.arrayToDataTable( #{data} );
+          var data = google.visualization.arrayToDataTable(#{data});
           var options = {
             title: 'Temperatures',
             curveType: 'function',
             legend: { position: 'bottom' }
           };
-          var chart = new google.visualization.LineChart( document.getElementById( 'curveChart' ));
-          chart.draw( data, options );
+          var chart = new google.visualization.LineChart(document.getElementById('curveChart'));
+          chart.draw(data, options);
         };
-        google.setOnLoadCallback( drawChart );
+        google.setOnLoadCallback(drawChart);
       </script>
     eos
     html.strip.gsub /[\n\r\s]+/, ' '
