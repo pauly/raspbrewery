@@ -15,7 +15,7 @@ class OneWire
     if options[ :logDir ]
       @logFile = options[ :logDir ] + '/temperature.log'
     end
-    @maxLogEntries = 1000
+    @maxLogEntries = 500
     if options[ :maxLogEntries ]
       @maxLogEntries = options[ :maxLogEntries ]
     end
@@ -43,15 +43,28 @@ class OneWire
     end
   end
 
-  def readLog
+  def readLog decimalPlaces=1
     header = [ 'time' ]
     data = [ ]
     self.read.each { | reading |
       header.push reading.first # the id
     }
     open( @logFile, 'r' ) do | f |
+      previousLine = [ ]
       f.each_line do | line |
-        data.push line.strip.split( "\t" )
+        row = line.strip.split( "\t" )
+        ok = false
+      	row.each_with_index do | column, i |
+	  if i > 0
+            row[i] = sprintf( '%0.' + decimalPlaces.to_s + 'f', row[i] )
+            ok = true if previousLine[i] != row[i]
+          end
+        end
+	# puts row.to_s + ' looks same as ' + previousLine.to_s unless ok
+        if ok
+          previousLine = row
+          data.push row
+        end
       end
     end
     if data.length > @maxLogEntries
