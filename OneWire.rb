@@ -15,7 +15,7 @@ class OneWire
     if options[ :logDir ]
       @logFile = options[ :logDir ] + '/temperature.log'
     end
-    @maxLogEntries = 500
+    @maxLogEntries = 400
     if options[ :maxLogEntries ]
       @maxLogEntries = options[ :maxLogEntries ]
     end
@@ -54,9 +54,10 @@ class OneWire
       f.each_line do | line |
         row = line.strip.split( "\t" )
         ok = false
-      	row.each_with_index do | column, i |
+      	header.each_with_index do | column, i |
 	  if i > 0
-            row[i] = sprintf( '%0.' + decimalPlaces.to_s + 'f', row[i] )
+            row[i] = row[i].to_f.round(decimalPlaces)
+            row[i] = nil if row[i].zero?
             ok = true if previousLine[i] != row[i]
           end
         end
@@ -87,7 +88,7 @@ class OneWire
     data = data.inspect.to_s.gsub /"([\d.]+)"/, '\1'
     data = data.gsub /\[([\d]+)/, '[d(\1)'
     html = <<-eos
-      <div id="curveChart" style="width: 1024px; height: 640px"></div>
+      <div id="curveChart" style="width: 800px; height: 800px"></div>
       #{intro}
       <script type="text/javascript" src="https://www.google.com/jsapi?autoload={ 'modules':[{ 'name':'visualization', 'version':'1', 'packages':['corechart'] }] }"></script>
       <script type="text/javascript">
@@ -98,6 +99,7 @@ class OneWire
             if (t < first) t += first;
             return new Date(t * 1000);
           };
+	  var nil = null;
           var data = google.visualization.arrayToDataTable(#{data});
           var options = {
             title: 'Temperatures',
