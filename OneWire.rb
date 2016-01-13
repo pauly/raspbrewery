@@ -87,29 +87,34 @@ class OneWire
     data = self.readLog
     data = data.inspect.to_s.gsub /"([\d.]+)"/, '\1'
     data = data.gsub /\[([\d]+)/, '[d(\1)'
+    # we can use serialised ruby data in js if we
+    # pretend ruby nil is a js variable value null
     html = <<-eos
-      <div id="curveChart" style="width: 800px; height: 800px"></div>
+      <div id="curveChart"></div>
       #{intro}
-      <script type="text/javascript" src="https://www.google.com/jsapi?autoload={ 'modules':[{ 'name':'visualization', 'version':'1', 'packages':['corechart'] }] }"></script>
-      <script type="text/javascript">
+      <script src="https://www.gstatic.com/charts/loader.js"></script>
+      <script>
         var drawChart = function() {
           var first = null;
-          var d = function(t) {
-            if (first === null) first = t;
-            if (t < first) t += first;
-            return new Date(t * 1000);
-          };
+	  var d = function(t) {
+	    if (first === null) first = t;
+	    if (t < first) t += first;
+	    return new Date(t * 1000);
+	  };
 	  var nil = null;
           var data = google.visualization.arrayToDataTable(#{data});
           var options = {
-            title: 'Temperatures',
-            curveType: 'function',
-            legend: { position: 'bottom' }
+            chart: {
+              title: 'Temperatures'
+            },
+            width: 800,
+            height: 800
           };
           var chart = new google.visualization.LineChart(document.getElementById('curveChart'));
           chart.draw(data, options);
         };
-        google.setOnLoadCallback(drawChart);
+	google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
       </script>
     eos
     html.strip.gsub /[\n\r\s]+/, ' '
