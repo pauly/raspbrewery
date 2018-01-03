@@ -52,16 +52,16 @@ class OneWire
     open( @logFile, 'r' ) do | f |
       previousLine = [ ]
       f.each_line do | line |
-        row = line.strip.split( "\t" )
+        row = line.strip.split("\t")[0, header.length]
         ok = false
-      	header.each_with_index do | column, i |
-	  if i > 0
+        header.each_with_index do | column, i |
+          if i > 0
             row[i] = row[i].to_f.round(decimalPlaces)
             row[i] = nil if row[i].zero?
             ok = true if previousLine[i] != row[i]
           end
         end
-	# puts row.to_s + ' looks same as ' + previousLine.to_s unless ok
+        # puts row.to_s + ' looks same as ' + previousLine.to_s unless ok
         if ok
           previousLine = row
           data.push row
@@ -86,7 +86,7 @@ class OneWire
   def graph intro = ''
     data = self.readLog
     data = data.inspect.to_s.gsub /"([\d.]+)"/, '\1'
-    data = data.gsub /\[([\d]+)/, '[d(\1)'
+    # data = data.gsub /\[([\d]+)/, '[d(\1)' # done with mapDates in js instead
     # we can use serialised ruby data in js if we
     # pretend ruby nil is a js variable value null
     html = <<-eos
@@ -95,14 +95,20 @@ class OneWire
       <script src="https://www.gstatic.com/charts/loader.js"></script>
       <script>
         var drawChart = function() {
-          var first = null;
-	  var d = function(t) {
-	    if (first === null) first = t;
-	    if (t < first) t += first;
-	    return new Date(t * 1000);
-	  };
-	  var nil = null;
-          var data = google.visualization.arrayToDataTable(#{data});
+          var first = Infinity;
+          var d = function(t) {
+            if (typeof t === 'string') return t;
+            if (first === Infinity) first = t;
+            if (t < 0) return first; /* hmm */
+            if (t < first) t += first;
+            return new Date(t * 1000);
+          };
+          var mapDates = function(e) {
+            e[0] = d(e[0]);
+            return e;
+          };
+          var nil = null;
+          var data = google.visualization.arrayToDataTable(#{data}.map(mapDates));
           var options = {
             chart: {
               title: 'Temperatures'
@@ -113,7 +119,7 @@ class OneWire
           var chart = new google.visualization.LineChart(document.getElementById('curveChart'));
           chart.draw(data, options);
         };
-	google.charts.load('current', {'packages':['corechart']});
+        google.charts.load('current', {'packages':['corechart']});
         google.charts.setOnLoadCallback(drawChart);
       </script>
     eos
